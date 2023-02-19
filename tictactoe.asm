@@ -10,7 +10,7 @@ check: .asciiz "check"
 msg1: .asciiz "you did it dumb person, aka Player 1"
 msg2: .asciiz "you did it dumb person, aka Player 2"
 
-board: .word 0, 0, 0, 0, 0, 0, 0, 0, 0 #current array, named board >:)
+boardArr: .word 0, 0, 0, 0, 0, 0, 0, 0, 0 # current board array
 empty: .word 0
 
 .text
@@ -18,8 +18,7 @@ empty: .word 0
 .globl main #omg main can be EVERYWHERE because it is global
 
 main:
- 
-  la $s0, board #setting the starting address of the board to $s0
+  la $s0, boardArr # setting the starting address of the boardArr to $s0
 
 ### FXN: Display it is P1's move
 P1Print:
@@ -46,7 +45,7 @@ P2Print:
 
 ### FXN: Printing the prompts for each round and getting user input
 Print_and_Get:
-  printBoard
+  jal printBoard
 
   li $v0, 4
   la $a0, pickmove
@@ -55,20 +54,24 @@ Print_and_Get:
   # get user input
   li $v0, 5 
   syscall
-  # moving the  input to another register
+  # moving the user input to temp reg
   move $t0, $v0
 
   # get to the correct location in the array
-  #recall  $s0 is the board array and $s2 is the index and $t0 is the user input
+    # $t0: user input
+    # $s0: boardArray
+    #################
+    # $t3: loads what value is in the position that user chose
+      # to be used for checking if it is a valid position
   mul $t1, $t0, 4
-  add $t4, $s0, $t1# add $s1, $t1, $s0 # $t4 = new index + $s0 -> we are adding the index to the location of our array (to get where we want the data teehee)
-  lw $t3, 0($t4) #0($t1) # $t3 = A[i], so now we have $t3 is our value in the array (time to test if it is zero or another number)
+  add $t4, $s0, $t1 # add $s1, $t1, $s0 # $t4 = new index + $s0 -> we are adding the index to the location of our array (to get where we want the data teehee)
+  lw $t3, 0($t4) # 0($t1) # $t3 = A[i], so now we have $t3 is our value in the array (time to test if it is zero or another number)
 
 bne $s3, 1, P2 # if it is player 1 -> go to P2
 
 P1: 
-  bne $t3, 0, P1Print # not empty
-  sw $s3, 0($t4)
+  bne $t3, 0, P1Print # not empty position -> reprompt P1
+  sw $s3, 0($t4) # empty -> store player in position
 
   li $v0, 4
   la $a0, confirm 
@@ -78,14 +81,13 @@ P1:
 
 
 P2:
-  bne $t3, 0, P2Print
+  bne $t3, 0, P2Print # not empty position -> reprompt P2
   sw $s3, 0($t4)
 
   li $v0, 4
   la $a0, confirm 
   syscall
   jal H1
-  
 
 H1:
   lw $t6, 0($s0) 
@@ -157,17 +159,15 @@ P2Win:
 
 ### FXN: PRINT THE BOARD
 printBoard:
-  li $t0, 0 # holds index of current element
-  li $t1, 0 # counter of elements processed
+  li $t1, 0 # index of current element
 
   # FIRST ELEMENT
   li $v0, 1
-  lw $a0, boardArr($t0)
+  lw $a0, boardArr($t1)
   syscall
 
   # increment index by 4 bytes
-  sll $t3, $t1, 2
-  add $t0, $t0, $t3 # update current address
+  addi $t1, $t1, 4 
 
   # separator
   li $v0, 11 # syscall number to print a character
@@ -176,12 +176,11 @@ printBoard:
 
   # SECOND ELEMENT
   li $v0, 1
-  lw $a0, boardArr($t0)
+  lw $a0, boardArr($t1)
   syscall
 
   # increment index by 4 bytes
-  sll $t3, $t1, 2
-  add $t0, $t0, $t3 # update current address
+  addi $t1, $t1, 4  
 
   # separator
   li $v0, 11 # syscall number to print a character
@@ -190,12 +189,11 @@ printBoard:
 
   # THIRD ELEMENT
   li $v0, 1
-  lw $a0, boardArr($t0)
+  lw $a0, boardArr($t1)
   syscall
 
   # increment index by 4 bytes
-  sll $t3, $t1, 2
-  add $t0, $t0, $t3 # update current address
+  addi $t1, $t1, 4
 
   # separator
   li $v0, 11 # syscall number to print a character
@@ -208,12 +206,11 @@ printBoard:
 
   # FOURTH ELEMENT
   li $v0, 1
-  lw $a0, boardArr($t0)
+  lw $a0, boardArr($t1)
   syscall
 
   # increment index by 4 bytes
-  sll $t3, $t1, 2
-  add $t0, $t0, $t3 # update current address
+  addi $t1, $t1, 4  
 
   # separator
   li $v0, 11 # syscall number to print a character
@@ -222,12 +219,11 @@ printBoard:
 
   # FIFTH ELEMENT
   li $v0, 1
-  lw $a0, boardArr($t0)
+  lw $a0, boardArr($t1)
   syscall
 
   # increment index by 4 bytes
-  sll $t3, $t1, 2
-  add $t0, $t0, $t3 # update current address
+  addi $t1, $t1, 4
 
   # separator
   li $v0, 11 # syscall number to print a character
@@ -236,12 +232,11 @@ printBoard:
 
   # SIXTH ELEMENT
   li $v0, 1
-  lw $a0, boardArr($t0)
+  lw $a0, boardArr($t1)
   syscall
 
   # increment index by 4 bytes
-  sll $t3, $t1, 2
-  add $t0, $t0, $t3 # update current address
+  addi $t1, $t1, 4
 
   # separator
   li $v0, 11 # syscall number to print a character
@@ -254,12 +249,11 @@ printBoard:
 
   # SEVENTH ELEMENT
   li $v0, 1
-  lw $a0, boardArr($t0)
+  lw $a0, boardArr($t1)
   syscall
 
   # increment index by 4 bytes
-  sll $t3, $t1, 2
-  add $t0, $t0, $t3 # update current address
+  addi $t1, $t1, 4  
 
   # separator
   li $v0, 11 # syscall number to print a character
@@ -268,12 +262,11 @@ printBoard:
 
   # EIGHTH ELEMENT
   li $v0, 1
-  lw $a0, boardArr($t0)
+  lw $a0, boardArr($t1)
   syscall
 
   # increment index by 4 bytes
-  sll $t3, $t1, 2
-  add $t0, $t0, $t3 # update current address
+  addi $t1, $t1, 4  
 
   # separator
   li $v0, 11 # syscall number to print a character
@@ -282,12 +275,11 @@ printBoard:
 
   # NINTH ELEMENT
   li $v0, 1
-  lw $a0, boardArr($t0)
+  lw $a0, boardArr($t1)
   syscall
 
   # increment index by 4 bytes
-  sll $t3, $t1, 2
-  add $t0, $t0, $t3 # update current address
+  addi $t1, $t1, 4 
 
   # separator
   li $v0, 11 # syscall number to print a character
@@ -299,6 +291,7 @@ printBoard:
   syscall
 
   jal $ra
+
 
 exit:
  li $v0, 10

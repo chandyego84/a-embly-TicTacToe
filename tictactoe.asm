@@ -3,19 +3,18 @@
 P1move: .asciiz "~PLAYER 1 MOVE~ \n" #let player 1 know its their move
 P2move: .asciiz "~PLAYER 2 MOVE~ \n" #let player 2 know its their move
 
-pickmove: .asciiz "where on the board do you want to go? (enter a value 0-8)\n" #pick a move msg
-confirm: .asciiz "your move has been recorded\n"
+pickmove: .asciiz "Pick a position on the board to play (enter a value 0-8)\n"
+confirm: .asciiz "Your move has been recorded.\n"
 
-check: .asciiz "check"
-msg1: .asciiz "you did it dumb person, aka Player 1"
-msg2: .asciiz "you did it dumb person, aka Player 2"
+check: .asciiz " debuggingCheck "
+msg1: .asciiz "You did it dumb person, aka Player 1!"
+msg2: .asciiz "You did it dumb person, aka Player 2!"
 
 boardArr: .word 0, 0, 0, 0, 0, 0, 0, 0, 0 # current board array
 empty: .word 0
 
 .text
-
-.globl main #omg main can be EVERYWHERE because it is global
+.globl main 
 
 main:
   la $s0, boardArr # setting the starting address of the boardArr to $s0
@@ -89,6 +88,7 @@ P2:
   syscall
   jal H1
 
+### FXN: Check first horizontal for win
 H1:
   lw $t6, 0($s0) 
   lw $t7, 4($s0) 
@@ -103,6 +103,7 @@ H1:
   beq $s3, 1, P1Win
   beq $s3, 2, P2Win
 
+### FXN: Check second horizontal for win
 H2:
   lw $t6, 12($s0)
   lw $t7, 16($s0)
@@ -117,11 +118,82 @@ H2:
   beq $s3, 1, P1Win
   beq $s3, 2, P2Win
 
+### FXN: Check third horizontal for win
 H3:
   lw $t6, 24($s0)
   lw $t7, 28($s0)
   lw $t8, 32($s0)
 
+  beq $t6, 0, V1
+  beq $t7, 0, V1
+  beq $t8, 0, V1
+
+  bne $t6, $t7, V1
+  bne $t6, $t8, V1
+  beq $s3, 1, P1Win
+  beq $s3, 2, P2Win
+
+V1:
+  lw $t6, 0($s0) 
+  lw $t7, 12($s0) 
+  lw $t8, 24($s0)
+  
+  beq $t6, 0, V2
+  beq $t7, 0, V2
+  beq $t8, 0, V2
+
+  bne $t6, $t7, V2
+  bne $t6, $t8, V2
+  beq $s3, 1, P1Win
+  beq $s3, 2, P2Win
+
+V2:
+  lw $t6, 4($s0) 
+  lw $t7, 16($s0) 
+  lw $t8, 28($s0)
+  
+  beq $t6, 0, V3
+  beq $t7, 0, V3
+  beq $t8, 0, V3
+
+  bne $t6, $t7, V3
+  bne $t6, $t8, V3
+  beq $s3, 1, P1Win
+  beq $s3, 2, P2Win
+
+V3:
+  lw $t6, 8($s0) 
+  lw $t7, 20($s0) 
+  lw $t8, 32($s0)
+  
+  beq $t6, 0, D1
+  beq $t7, 0, D1
+  beq $t8, 0, D1
+
+  bne $t6, $t7, D1
+  bne $t6, $t8, D1
+  beq $s3, 1, P1Win
+  beq $s3, 2, P2Win
+
+D1:
+  lw $t6, 0($s0) 
+  lw $t7, 16($s0) 
+  lw $t8, 32($s0)
+  
+  beq $t6, 0, D2
+  beq $t7, 0, D2
+  beq $t8, 0, D2
+
+  bne $t6, $t7, D2
+  bne $t6, $t8, D2
+  beq $s3, 1, P1Win
+  beq $s3, 2, P2Win
+
+D2:
+  lw $t6, 8($s0) 
+  lw $t7, 16($s0) 
+  lw $t8, 24($s0)
+  
   beq $t6, 0, freak
   beq $t7, 0, freak
   beq $t8, 0, freak
@@ -131,18 +203,20 @@ H3:
   beq $s3, 1, P1Win
   beq $s3, 2, P2Win
 
+### FXN: When no win has occurred, switch back to other player for reprompting
 freak:
-  li $v0, 4
-  la $a0, check 
-  syscall
+  # debugging
+  #li $v0, 4
+  #la $a0, check 
+  #syscall
+  #li $v0, 1
+  #move $a0, $s3 
+  #syscall
 
-  li $v0, 1
-  move $a0, $s3 
-  syscall
+  beq $s3, 1, P2Print # if player1 turn -> prompt player2 (switch players)
+  beq $s3, 2, P1Print # if player2 turn -> prompt player1 (switch players)
 
-  beq $s3, 1, P2Print
-  beq $s3, 2, P1Print
-
+### FXN: Player 1 won!
 P1Win:
   li $v0, 4
   la $a0, msg1 
@@ -150,6 +224,7 @@ P1Win:
 
   jal exit
 
+### FXN: Player 2 won!
 P2Win:
   li $v0, 4
   la $a0, msg2 

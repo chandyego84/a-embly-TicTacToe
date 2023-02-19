@@ -9,6 +9,7 @@ confirm: .asciiz "Your move has been recorded.\n"
 check: .asciiz " debuggingCheck "
 msg1: .asciiz "You did it dumb person, aka Player 1!"
 msg2: .asciiz "You did it dumb person, aka Player 2!"
+msg3: .asciiz "Nobody won!"
 
 boardArr: .word 0, 0, 0, 0, 0, 0, 0, 0, 0 # current board array
 empty: .word 0
@@ -18,6 +19,7 @@ empty: .word 0
 
 main:
   la $s0, boardArr # setting the starting address of the boardArr to $s0
+  li $t9, 0
 
 ### FXN: Display it is P1's move
 P1Print:
@@ -34,9 +36,10 @@ jal Print_and_Get
 P2Print:
   li $s3, 2 #player 2
 
-  li $v0, 4
-  la $a0, check 
-  syscall
+  # debug
+  #li $v0, 4
+  #la $a0, check 
+  #syscall
 
   li $v0, 4
   la $a0, P2move 
@@ -72,9 +75,13 @@ P1:
   bne $t3, 0, P1Print # not empty position -> reprompt P1
   sw $s3, 0($t4) # empty -> store player in position
 
+  addi $t9, $t9, 1
+
   li $v0, 4
   la $a0, confirm 
   syscall
+
+  beq $t9, 9, NoWin # draw
 
   jal H1
 
@@ -83,9 +90,14 @@ P2:
   bne $t3, 0, P2Print # not empty position -> reprompt P2
   sw $s3, 0($t4)
 
+  addi $t9, $t9, 1
+
   li $v0, 4
   la $a0, confirm 
   syscall
+
+  beq $t9, 9, NoWin # draw
+
   jal H1
 
 ### FXN: Check first horizontal for win
@@ -228,6 +240,13 @@ P1Win:
 P2Win:
   li $v0, 4
   la $a0, msg2 
+  syscall
+
+  jal exit
+
+NoWin:
+  li $v0, 4
+  la $a0, msg3 
   syscall
 
   jal exit
